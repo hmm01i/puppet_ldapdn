@@ -31,6 +31,10 @@ Puppet::Type.newtype(:ldapdn) do
     desc "Specify the attribute you want to ldapmodify"
   end
 
+  newparam(:remote_url) do
+    desc "Specify the ldap url of the remote server"
+  end
+
   newparam(:remote_ldap) do
     desc "Specify the remote ldap server"
   end

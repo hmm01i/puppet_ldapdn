@@ -1,7 +1,6 @@
-puppet_ldapdn
-=============
+# puppet_ldapdn
 
-puppet_ldapdn is a puppet type and provider that aims to simply manage newer slapd.d style openldap entries via ldapmodify and ldapadd commands. This is much more preferable than writing files directly to the slapd.d database.
+puppet_ldapdn is a puppet type and provider that aims to simply manage ldap entries via ldapmodify and ldapadd commands. This is much more preferable than writing files directly to the database.
 
 In essence the mechanism it uses is described as follows:
 
@@ -12,9 +11,79 @@ In essence the mechanism it uses is described as follows:
 * write out an appropriate ldif file
 * execute it via an ldapmodify statement.
 
+
+## Usage
+
+Create a user
+
+```puppet
+ldapdn{'admin user':
+  ensure => present,
+  dn => 'uid=admin,cn=config',
+  attributes => [
+    'objectClass: top',
+    'objectClass: person',
+    'objectClass: inetorgperson',
+    'uid: admin',
+    'cn: admin',
+    'userPassword: password'],
+  unique_attributes => ['userPassword'],
+}
+```
+
+
+Modify a single attribute
+
+```puppet
+ldapdn{'changelog':
+  dn     => 'cn=changelog5,cn=config',
+  attributes => [
+    "nsslapd-changelogdir: /var/lib/dirsrv/slapd-${suffix}/changelogdb"
+  ],
+  unique_attributes => ['nsslapd-changelogdir']
+}
+
+```
+## Reference
+
+`ensure`
+String. present or absent. Defaults to present
+
+`dn`
+String. The entry you want to ldapadd/ldapmodify. Defaults to resource name
+
+`attributes`
+Array. Attributes being set/changed for the resource. Each element should be formatted "attribute: value"
+Sets the attributes that you wish (be sure to separate key and value with <semi-colon space>).
+
+`unique_attributes`
+Array. List of attributes that are unique.
+
+Used to specify the behaviour of ldapmodify when there is an existing attribute with this name. If the attribute key is specified here, then the ldapmodify will issue a replace, replacing the existing value (if any), whereas if the attribute key is not specified here, then ldapmodify will simply ensure the attribute exists with the value required, alongside other values if also specified (e.g. for objectClass).
+
+`indifferent_attributes`
+Array. If attribute exists its value will not be changed (e.g. useful for passwords). If attribute does not exist and is secified in `attributes`, it will be created with specified value.
+
+`auth_opts`
+Array. Options passed to ldapadd/ldapmodify for authentication. Defaults to ['-QY', 'EXTERNAL',]
+
+`remote_url`
+String. Connect to a remote ldap server. Should be valid LDAP url. Port is optional
+Example
+```
+remote_url => 'ldaps://ldap1.example.com:636'
+```
+
+`remote_ldap`
+This is deprecated but still available for comptibility.
+
+String. Just provide a hostname. The resource will construct a url using ldap://
+
+## Examples
+
 Examples of usage are as follows:
 
-First you might like to set a root password:
+You might like to set a root password:
 
 ```puppet
 ldapdn{"add manager password":
@@ -25,8 +94,9 @@ ldapdn{"add manager password":
 }
 ```
 
-attributes sets the attributes that you wish to set (be sure to separate key and value with <semi-colon space>).
-unique_attributes can be used to specify the behaviour of ldapmodify when there is an existing attribute with this name. If the attribute key is specified here, then the ldapmodify will issue a replace, replacing the existing value (if any), whereas if the attribute key is not specified here, then ldapmodify will simply ensure the attribute exists with the value required, alongside other values if also specified (e.g. for objectClass).
+A defined type to create OU's
+
+In this example, multiple groups are created. Notice, that "objectClass" is not in unique_attributes, so that (in future) more objectClasses may be added to each ou, without others being replaced.
 
 ```puppet
 $organizational_units = ["Groups", "People", "Programs"]
@@ -45,7 +115,6 @@ define ldap::add_organizational_unit () {
 }
 ```
 
-In the above example, multiple groups are created. Notice in each case, that "objectClass" does not form part of the unique_attributes, so that (in future) more objectClasses may be added to each ou, without them being replaced.
 
 By default, all ldap commands are issued with the `-QY EXTERNAL` SASL auth mechanism. To deal with this, you might want to allow managing of the bdb database by this external mechanism, which then allows you to create a database without a "no write access to parent" error:
 
@@ -88,20 +157,20 @@ ldapdn{"add database":
 }
 ```
 
-Optionally you can also now manage a remote ldap resources by adding the option remote_ldap and combining this with option auth_opts:
+Optionally you can manage a remote ldap resources. Combine with option `auth_opts`:
 
 ```puppet
   ldapdn{"adding_new_user":
     dn => "cn=users,dc=mygroup",
     attributes => ["member: cn=myteam,cn=myunit,dc=mygroup"],
     ensure => present,
-    remote_ldap => "ldap1.example.com",
+    remote_url => "ldaps://ldap1.example.com",
     auth_opts => ["-xD", "cn=admin,cn=example,dc=com", "-w", "somePassword"],
   }
 ```
 
 
-Sometimes you will want to ensure an attribute exists, but wont care about its subsequent value. An example of this is a password.
+To ensure an attribute exists, but ignore its subsequent value. An example of this is a password.
 
 ```puppet
 ldapdn{"add password":
