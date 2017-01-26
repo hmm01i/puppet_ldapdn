@@ -84,10 +84,10 @@ Puppet::Type.type(:ldapdn).provide :ldapdn do
       end
 
       begin
-        if resource[:remote_ldap]
-          command = [command(cmd), "-H", "ldap://#{resource[:remote_ldap]}", "-d", "0", "-f", ldif_file]
-        elsif resource[:remote_url]
+        if resource[:remote_url]
           command = [command(cmd), "-H", "#{resource[:remote_url]}", "-d", "0", "-f", ldif_file]
+        elsif resource[:remote_ldap]
+          command = [command(cmd), "-H", "ldap://#{resource[:remote_ldap]}", "-d", "0", "-f", ldif_file]
         else
           command = [command(cmd), "-H", "ldapi:///", "-d", "0", "-f", ldif_file]
         end
@@ -106,10 +106,10 @@ Puppet::Type.type(:ldapdn).provide :ldapdn do
   end
 
   def ldap_work_to_do(asserted_attributes)
-    if resource[:remote_ldap]
-      command = [command(:ldapsearchcmd), "-H", "ldap://#{resource[:remote_ldap]}", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
-    elsif resource[:remote_url]
+    if resource[:remote_url]
       command = [command(:ldapsearchcmd), "-H", "#{resource[:remote_url]}", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
+    elsif resource[:remote_ldap]
+      command = [command(:ldapsearchcmd), "-H", "ldap://#{resource[:remote_ldap]}", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
     else
       command = [command(:ldapsearchcmd), "-H", "ldapi:///", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
     end
