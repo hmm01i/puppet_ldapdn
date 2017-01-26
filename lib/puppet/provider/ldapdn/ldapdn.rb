@@ -86,6 +86,8 @@ Puppet::Type.type(:ldapdn).provide :ldapdn do
       begin
         if resource[:remote_ldap]
           command = [command(cmd), "-H", "ldap://#{resource[:remote_ldap]}", "-d", "0", "-f", ldif_file]
+        elsif resource[:remote_url]
+          command = [command(cmd), "-H", "#{resource[:remote_url]}", "-d", "0", "-f", ldif_file]
         else
           command = [command(cmd), "-H", "ldapi:///", "-d", "0", "-f", ldif_file]
         end
