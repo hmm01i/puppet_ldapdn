@@ -106,7 +106,7 @@ Puppet::Type.type(:ldapdn).provide :ldapdn do
   def ldap_work_to_do(asserted_attributes)
     if resource[:remote_ldap]
       command = [command(:ldapsearchcmd), "-H", "ldap://#{resource[:remote_ldap]}", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
-    elseif resource[:remote_url]
+    elsif resource[:remote_url]
       command = [command(:ldapsearchcmd), "-H", "#{resource[:remote_url]}", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
     else
       command = [command(:ldapsearchcmd), "-H", "ldapi:///", "-b", resource[:dn], "-s", "base", "-LLL", "-d", "0"]
